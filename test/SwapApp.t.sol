@@ -12,6 +12,7 @@ contract SwapAppTest is Test {
     address DAI = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1; // DAI address in Arbitrum mainnet
 
     function setUp() public {
+        // Al estar imitando el estado de una red real, le pasamos la address del router de Uniswap para forkearla
         app = new SwapApp(uniswapV2SwappRouterAddress);
     }
 
@@ -22,11 +23,13 @@ contract SwapAppTest is Test {
 
     function testSwapTokensCorrectly() public {
         vm.startPrank(user);
-        uint256 amountIn = 5 * 1e6; 
-        IERC20(USDT).approve(address(app), amountIn); 
+        // Como hacemos una llamada al safeTransferFrom tenemos que hacer un approve primero
+        uint256 amountIn = 5 * 1e6; // 1e6 es número de decimales del token usdt en la red de arbitrum. 
+        IERC20(USDT).approve(address(app), amountIn); // aprobamos a nuestro contrato app que transfiera dicha cantidad. 
 
-        uint256 amountOutMin = 4 * 1e18;
-        uint256 deadline = 1747815058 + 1000000000; 
+        //Llamada a swapTokens propiamente
+        uint256 amountOutMin = 4 * 1e18; // 1e18 es número de decimales del token dai en la red de arbitrum. 
+        uint256 deadline = 1747815058 + 1000000000; //unixtimestamp + 100000000 para que no revierta
         address[] memory path = new address[](2);
         path[0] = USDT;
         path[1] = DAI;
@@ -38,7 +41,7 @@ contract SwapAppTest is Test {
         uint256 daiBalanceAfter = IERC20(DAI).balanceOf(user);
 
         assert(usdtBalanceAfter == usdtBalanceBefore - amountIn);
-        assert(daiBalanceAfter > daiBalanceBefore); 
+        assert(daiBalanceAfter > daiBalanceBefore); // No sabemos qué cantidad nos va a devolver exactamente
 
         vm.stopPrank();
     }
